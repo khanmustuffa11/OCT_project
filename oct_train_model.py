@@ -25,8 +25,8 @@ if tf.test.gpu_device_name():
     print('GPU found')
 else:
     print("No GPU found")
-df_train = pd.read_csv('data/oct/train_csv.csv')
-train_kaggle = df_train[df_train['source']=='oct_mendely'] 
+df_train = pd.read_csv('data/oct/oct_artelus/OCT_final_train_csv.csv')
+#train_kaggle = df_train[df_train['source']=='oct_mendely'] 
 #train_idrid_all = df_train[(df_train['source']=='idrid') & (df_train['drlevel'] > 0)]  
 #train_idrid_0 = df_train[(df_train['source']=='idrid') & (df_train['drlevel'] == 0)].sample(len(train_idrid_all),replace=True)
 #train_idrid = pd.concat([train_idrid_all,train_idrid_0])
@@ -47,7 +47,7 @@ df_train = balance_df(df_train)
 for i in range(100):
     df_train = shuffle(df_train)
 
-df_test = pd.read_csv('data/oct/val_csv.csv')
+df_test = pd.read_csv('data/oct/oct_artelus/OCT_final_val_csv.csv')
 df_test = balance_df(df_test)
 
 print(df_train['level'].value_counts())
@@ -121,7 +121,11 @@ class CustomDataGenerator(tf.keras.utils.Sequence):
         batch_y_vector= [self.data_frame["level_0"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
                         self.data_frame["level_1"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
                         self.data_frame["level_2"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
-                        self.data_frame["level_3"][idx * self.batch_size:(idx + 1) * self.batch_size].values,]
+                        self.data_frame["level_3"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
+                        self.data_frame["level_4"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
+                        self.data_frame["level_5"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
+                        self.data_frame["level_6"][idx * self.batch_size:(idx + 1) * self.batch_size].values,
+                        self.data_frame["level_7"][idx * self.batch_size:(idx + 1) * self.batch_size].values,]
                         #self.data_frame["drlevel_4"][idx * self.batch_size:(idx + 1) * self.batch_size].values]
         # batch_weights = [self.data_frame["sample_weight"][idx * self.batch_size:(idx + 1) * self.batch_size].values]
         x = [self.__get_image(file_id) for file_id in batch_x]
@@ -145,17 +149,18 @@ loss = CategoricalCrossentropy(label_smoothing=.1)
 
 with strategy.scope():
     #base_model = EfficientNetV2B0(weights='imagenet',include_top=False, pooling = 'avg')
+    #base_model.summary()
     #model = Sequential()
     #model.add(base_model)
     #model.add(Dropout(.75))
     #model.add(Dense(4, activation = 'softmax'))
     #del base_model
     model = Sequential()
-    base_model = load_model('basemodel.h5', compile = False)
+    base_model = load_model('base_models/basemodel.h5', compile = False)
     for layer in base_model.layers[:-2]:
         model.add(layer)
     model.add(Dropout(.75))
-    model.add(Dense(4, activation = 'softmax'))
+    model.add(Dense(8, activation = 'softmax'))
     model.summary()
     model.compile(optimizer=adm, loss=loss,metrics=['accuracy'])
 

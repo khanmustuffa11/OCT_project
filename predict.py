@@ -6,9 +6,10 @@ from PIL import Image
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 # df = pd.read_csv('final_test.csv')
-df = pd.read_csv('data/oct/OCT_100_csv.csv')
+df = pd.read_csv('data/oct/oct_mendely/test_csv.csv')
 #df=df[df['source']=='idrid']
 model = load_model('oct_models/oct_model.h5', compile=False)
+print(model)
 def get_image(file_path):
     img = Image.open(file_path).convert('RGB')
     img = np.asarray(img.resize((500,500)))
@@ -25,6 +26,6 @@ for i in tqdm(range(len(df))):
 
 df['predictions'] = predictions
 df['confidences'] = confidence
-df.to_csv('OCT_100_predictions.csv')
-print(classification_report(df['label'],df['predictions']))
-print(confusion_matrix(df['label'],df['predictions']))
+df.to_csv('chest_Disease.csv')
+print(classification_report(df['level'],df['predictions']))
+print(confusion_matrix(df['level'],df['predictions']))

@@ -2,6 +2,10 @@
 data
 *.h5
 *.pt
-results
-base models
-oct_models
+results/
+base models/
+oct_models/
+gradcam-ouputs/
+attention_model/
+oct_mendely_artelus_models/
+oct_viraj/
