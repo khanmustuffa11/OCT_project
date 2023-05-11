@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model, Sequential
 import os
 from cv2 import resize, hconcat,cvtColor,COLOR_GRAY2BGR,vconcat
 import numpy as np
-model = load_model('C:/Users/mkhan/Desktop/musabi/OCT_project/attention_model/attention_model.h5')
+model = load_model('C:/Users/mkhan/Desktop/musabi/OCT_project/oct_mendely_artelus_models/model_artmen.h5')
 #model = load_model('oct_models/oct_model.h5')
 model.layers[-1].activation = None
 for layer in model.layers:
@@ -97,6 +97,6 @@ def save_and_display_gradcam(img_path, heatmap_conv, heatmap_multiply, alpha=.4)
    
 for f in ['data/oct/oct_100/1/DRUSEN-11129-3.jpeg','data/oct/oct_100/1/DRUSEN-186682-2.jpeg']:
     img_path = f
-    heatmap_conv = make_gradcam_heatmap(img_path, model, 'top_conv')
-    heatmap_multiply = make_gradcam_heatmap(img_path, model, 'multiply')
+    heatmap_conv = make_gradcam_heatmap(img_path, model, 'efficientnetv2-b0')
+    heatmap_multiply = make_gradcam_heatmap(img_path, model, 'efficientnetv2-b0')
     save_and_display_gradcam(img_path, heatmap_conv, heatmap_multiply) 
