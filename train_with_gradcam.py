@@ -26,7 +26,7 @@ if tf.test.gpu_device_name():
     print('GPU found')
 else:
     print("No GPU found")
-df_train = pd.read_csv('data/oct/OCT_final_train_csv.csv')
+df_train = pd.read_csv('csv_hub/final_train_clahe.csv')
 #df_train = df_train[df_train['source']=='kaggle']
 #train_kaggle = df_train[df_train['source']=='kaggle'] 
 #train_idrid_all = df_train[(df_train['source']=='idrid') & (df_train['drlevel'] > 0)]  
@@ -50,7 +50,7 @@ for i in range(100):
     df_train = shuffle(df_train)
 df_train = balance_df(df_train)
 
-df_test = pd.read_csv('data/oct/OCT_final_val_csv.csv')
+df_test = pd.read_csv('csv_hub/final_val_clahe.csv')
 #df_test = df_test[df_test['source']=='kaggle']
 df_test = balance_df(df_test)
 
@@ -153,21 +153,21 @@ loss = CategoricalCrossentropy(label_smoothing=.1)
 with strategy.scope():
     
     input_tensor = Input(shape=(img_width,img_height,3))
-    conv_base = EfficientNetV2B0(weights='imagenet',include_top=False,input_tensor=input_tensor)
-    a_map = layers.Conv2D(512, 1, strides=(1, 1), padding="same", activation='relu')(conv_base.output)
-    a_map = layers.Conv2D(1, 1, strides=(1, 1), padding="same", activation='relu')(a_map)
-    a_map = layers.Conv2D(1280, 1, strides=(1, 1), padding="same", activation='sigmoid')(a_map)
-    res = layers.Multiply()([conv_base.output, a_map])
-    x = GlobalMaxPooling2D()(res)
-    x = Dropout(0.5)(x)
+    conv_base = EfficientNetV2B0(weights='imagenet',include_top=False,input_tensor=input_tensor, pooling='avg')
+    # a_map = layers.Conv2D(512, 1, strides=(1, 1), padding="same", activation='relu')(conv_base.output)
+    # a_map = layers.Conv2D(1, 1, strides=(1, 1), padding="same", activation='relu')(a_map)
+    # a_map = layers.Conv2D(1280, 1, strides=(1, 1), padding="same", activation='sigmoid')(a_map)
+    # res = layers.Multiply()([conv_base.output, a_map])
+    #x = GlobalMaxPooling2D(conv_base.output)
+    x = Dropout(0.5)(conv_base.output)
     predictions = Dense(8, activation='softmax', name='final_output')(x)
     model = Model(input_tensor, predictions)
     del conv_base
-    model.load_weights("C:/Users/mkhan/Desktop/musabi/OCT_project/attention_8class_001--1.188111--0.700942--0.705631--0.895600.h5", by_name=True, skip_mismatch = True)
+    model.load_weights("base_models/basemodel.h5", by_name=True, skip_mismatch = True)
     model.summary()
     model.compile(optimizer=adm, loss=loss,metrics=['accuracy'])
 
-mcp_save = ModelCheckpoint('attention_8class_{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
+mcp_save = ModelCheckpoint('clahe_gradcam_8class_{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
 model.fit(
     custom_train_generator,
     validation_data = custom_test_generator,

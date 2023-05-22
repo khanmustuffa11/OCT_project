@@ -36,10 +36,12 @@ out_dir = "C:\\Users\\mkhan\\Desktop\\musabi\\OCT_project\\ARMD\\"
 def apply_clahe(img_path, clip_limit=0.5, tile_size=(8,8)):
     # Load grayscale image
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    
 
     # Apply CLAHE
     clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_size)
     clahe_img = clahe.apply(img)
+    clahe_img = cv2.cvtColor(clahe_img,cv2.COLOR_GRAY2RGB)
 
     return clahe_img
 

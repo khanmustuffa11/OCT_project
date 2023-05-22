@@ -25,7 +25,7 @@ if tf.test.gpu_device_name():
     print('GPU found')
 else:
     print("No GPU found")
-df_train = pd.read_csv('data/oct/oct_artelus/OCT_final_train_csv.csv')
+df_train = pd.read_csv('data/oct/OCT_final_train_csv.csv')
 #train_kaggle = df_train[df_train['source']=='oct_mendely'] 
 #train_idrid_all = df_train[(df_train['source']=='idrid') & (df_train['drlevel'] > 0)]  
 #train_idrid_0 = df_train[(df_train['source']=='idrid') & (df_train['drlevel'] == 0)].sample(len(train_idrid_all),replace=True)
@@ -47,7 +47,7 @@ df_train = balance_df(df_train)
 for i in range(100):
     df_train = shuffle(df_train)
 
-df_test = pd.read_csv('data/oct/oct_artelus/OCT_final_val_csv.csv')
+df_test = pd.read_csv('data/oct/OCT_final_val_csv.csv')
 df_test = balance_df(df_test)
 
 print(df_train['level'].value_counts())
@@ -164,7 +164,7 @@ with strategy.scope():
     model.summary()
     model.compile(optimizer=adm, loss=loss,metrics=['accuracy'])
 
-mcp_save = ModelCheckpoint('model_{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
+mcp_save = ModelCheckpoint('model_xray_base_8class{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
 model.fit(
     custom_train_generator,
     validation_data = custom_test_generator,

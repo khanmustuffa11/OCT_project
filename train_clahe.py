@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from tqdm import tqdm
+import cv2
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Model, load_model, Sequential
@@ -92,20 +93,40 @@ class CustomDataGenerator(tf.keras.utils.Sequence):
             img = tf.image.transpose(img)
         img = tf.image.random_flip_up_down(img)
         img = tf.image.random_flip_left_right(img)
-        img = tf.image.random_brightness(img, 0.5)
+        img = tf.image.random_brightness(img, 0.2)
         img = tf.image.random_contrast(img, 0.5, 1.5)
         img = tf.image.random_saturation(img, 0.5, 1.5)
         if mode == 'rgb':
-            img = tf.image.random_hue(img, 0.5)
+            img = tf.image.random_hue(img, .2)
         img = tfa.image.rotate(img, random.uniform(-90,90) * math.pi / 180)
         
         return tf.image.random_jpeg_quality(img, 30,100)
+    def _apply_clahe(self, image, limit = 0.5):
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        # Convert the image to LAB color space
+        lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+
+        # Split the LAB image into L, A, and B channels
+        l, a, b = cv2.split(lab_image)
+
+        # Apply CLAHE to the L channel
+        clahe = cv2.createCLAHE(clipLimit=limit, tileGridSize=(8, 8))
+        l_clahe = clahe.apply(l)
+
+        # Merge the modified L channel with the original A and B channels
+        lab_clahe_image = cv2.merge((l_clahe, a, b))
+
+        # Convert the image back to BGR format
+        modified_image = cv2.cvtColor(lab_clahe_image, cv2.COLOR_LAB2BGR)
+
+        return cv2.cvtColor(modified_image, cv2.COLOR_BGR2RGB)
 
     def __get_image(self, file_id):
         """ open image with file_id path and apply data augmentation """
         if self.subset!= 'training':
             img = Image.open(file_id).convert('RGB')
             img = np.asarray(img.resize((self.img_shape[0], self.img_shape[1])))
+            img =self._apply_clahe(img)
         else:
             if random.randint(1,5) >= 4:
                 img = Image.open(file_id).convert('L').convert('RGB')
@@ -115,6 +136,7 @@ class CustomDataGenerator(tf.keras.utils.Sequence):
             else:
                 img = Image.open(file_id).convert('RGB')
                 img = np.asarray(img.resize((self.img_shape[0], self.img_shape[1])))
+                img = self._apply_clahe(img)
                 if self.augmentation: 
                     img = self.__data_augmentation(img)
         img = tf.cast(img, tf.float32)
@@ -153,21 +175,21 @@ loss = CategoricalCrossentropy(label_smoothing=.1)
 with strategy.scope():
     
     input_tensor = Input(shape=(img_width,img_height,3))
-    conv_base = EfficientNetV2B0(weights='imagenet',include_top=False,input_tensor=input_tensor)
-    a_map = layers.Conv2D(512, 1, strides=(1, 1), padding="same", activation='relu')(conv_base.output)
-    a_map = layers.Conv2D(1, 1, strides=(1, 1), padding="same", activation='relu')(a_map)
-    a_map = layers.Conv2D(1280, 1, strides=(1, 1), padding="same", activation='sigmoid')(a_map)
-    res = layers.Multiply()([conv_base.output, a_map])
-    x = GlobalMaxPooling2D()(res)
-    x = Dropout(0.5)(x)
+    conv_base = EfficientNetV2B0(weights='imagenet',include_top=False,input_tensor=input_tensor, pooling='avg')
+    # a_map = layers.Conv2D(512, 1, strides=(1, 1), padding="same", activation='relu')(conv_base.output)
+    # a_map = layers.Conv2D(1, 1, strides=(1, 1), padding="same", activation='relu')(a_map)
+    # a_map = layers.Conv2D(1280, 1, strides=(1, 1), padding="same", activation='sigmoid')(a_map)
+    # res = layers.Multiply()([conv_base.output, a_map])
+    #x = GlobalMaxPooling2D(conv_base.output)
+    x = Dropout(0.5)(conv_base.output)
     predictions = Dense(8, activation='softmax', name='final_output')(x)
     model = Model(input_tensor, predictions)
     del conv_base
-    model.load_weights("C:/Users/mkhan/Desktop/musabi/OCT_project/attention_8class_001--1.188111--0.700942--0.705631--0.895600.h5", by_name=True, skip_mismatch = True)
+    model.load_weights("base_models/basemodel.h5", by_name=True, skip_mismatch = True)
     model.summary()
     model.compile(optimizer=adm, loss=loss,metrics=['accuracy'])
 
-mcp_save = ModelCheckpoint('attention_8class_{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
+mcp_save = ModelCheckpoint('clahe_gradcam_8class_{epoch:03d}--{loss:03f}--{accuracy:03f}--{val_loss:03f}--{val_accuracy:03f}.h5', verbose=1, monitor='val_loss',save_best_only=True, mode='min')
 model.fit(
     custom_train_generator,
     validation_data = custom_test_generator,
