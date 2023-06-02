@@ -51,3 +51,51 @@ df.to_csv('clahe_results_22_may.csv')
 
 # print(classification_report(df['level'],df['predictions']))
 # print(confusion_matrix(df['level'],df['predictions']))
+
+
+class CustomDatasetLabeled(torch.utils.data.Dataset):
+    def __init__(self, df, split, images_folder, transform = None):
+        self.df = df
+        self.images_folder = images_folder
+        self.transform = transform
+        self.split=split
+        #self.class2index = {"cat":0, "dog":1}
+
+    def __len__(self):
+        return len(self.df)
+    def __getitem__(self, index):
+        filename = self.df.loc[index]["path"]
+        label = self.df.loc[index]["level"]
+        image = PIL.Image.open(os.path.join(self.images_folder, filename))
+        image = image.convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        if self.split=="unlabeled":
+            return image, -1
+        return image, label
+
+# Data augmentation and normalization for training
+# Just normalization for validation
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+    'test': transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+}
+
+train_data = CustomDatasetLabeled(df=train, split="train",  images_folder="./", transform=data_transforms['train'])
+val_data = CustomDatasetLabeled(df=val, split="val", images_folder="./", transform=data_transforms['val'])
