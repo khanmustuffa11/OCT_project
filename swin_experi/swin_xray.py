@@ -13,8 +13,8 @@ from sklearn.utils.class_weight import compute_sample_weight
 import timm
 from timm.loss import LabelSmoothingCrossEntropy
 device = 'cuda'
-img_width, img_height= 224, 224
-BATCH_SIZE = 16
+img_width, img_height= 272, 272
+BATCH_SIZE = 350
 DISEASE_LABELS = ['level_0', 'level_1','level_2','level_3']
 
 #DR_LABELS = []
@@ -118,7 +118,7 @@ class Engine:
             results['test_accuracies'].append(test_accuracy)
 
             # Save the model
-            model_path = f"{save_dir}/swinv2b_torch_xray{train_loss:.4f}_{train_accuracy:.4f}_{test_loss:.4f}_{test_accuracy:.4f}.pth"
+            model_path = f"{save_dir}/swinv2b_torch{train_loss:.4f}_{train_accuracy:.4f}_{test_loss:.4f}_{test_accuracy:.4f}.pth"
             torch.save(model, model_path)
 
             print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_accuracy:.4f}, Test Loss: {test_loss:.4f}, Test Acc: {test_accuracy:.4f}")
@@ -210,19 +210,19 @@ pretrained_swin.head = torch.nn.Sequential(
     torch.nn.Dropout(0.5),
     torch.nn.Linear(512, 4)
 )
-pretrained_swin.heads = torch.nn.Linear(in_features=768, out_features=num_classes)
+#pretrained_swin.heads = torch.nn.Linear(in_features=768, out_features=num_classes)
 
 # Check if multiple GPUs are available and wrap the model with DataParallel
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
-    pretrained_vit = torch.nn.DataParallel(pretrained_swin)
+    pretrained_swin = torch.nn.DataParallel(pretrained_swin)
 
 pretrained_swin = pretrained_swin.to('cuda')
 pretrained_swin_transforms = pretrained_swin_weights.transforms()
 #criterion =LabelSmoothingCrossEntropy()
 criterion = torch.nn.BCEWithLogitsLoss()
 #criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(pretrained_swin.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(pretrained_swin.parameters(), lr=0.0001)
 
 num_epochs = 100
 engine = Engine()

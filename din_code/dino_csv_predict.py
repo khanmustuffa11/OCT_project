@@ -94,7 +94,7 @@ def predict_csv(model, csv_path, device):
 
 
 # Specify the CSV file path
-csv_file = 'oct_final_test_vit.csv'
+csv_file = 'C:\\Users\\mkhan\\Desktop\\musabi\\OCT_project\\oct_final_test_vit.csv'
 
 # Perform predictions and save the results
 output_csv = predict_csv(model, csv_file, device)
