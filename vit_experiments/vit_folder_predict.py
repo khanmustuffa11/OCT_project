@@ -15,7 +15,7 @@ import matplotlib.cm as cm
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = torch.load('vit_torch_0.0624_0.9748_0.0583_0.9757.pth')
+model = torch.load('vit_models/vit_oct_xrayre0.0238_0.9910_0.1655_0.9689.pth')
 import csv
 
 import csv
@@ -48,7 +48,7 @@ def predict_folder(model, folder_path, device):
             predictions.append(prediction)
 
     # Define the path for the output CSV file
-    output_csv = 'predict.csv'
+    output_csv = 'vit_xrayre_preddrusen.csv'
 
     # Save the predictions to the CSV file
     with open(output_csv, 'w', newline='') as csvfile:

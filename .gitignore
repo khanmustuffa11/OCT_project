@@ -21,6 +21,7 @@ csv_hub/
 model_checkpoints/
 samples_for_gradcam_testing/
 vit_models/
+*.pth
 
 
 
